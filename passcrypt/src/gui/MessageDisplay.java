@@ -27,4 +27,8 @@ public class MessageDisplay {
     return JOptionPane.showInputDialog(null, message, programName,
         JOptionPane.INFORMATION_MESSAGE);
   }
+  
+  public static void setupDisplay() {
+	 
+  }
 }

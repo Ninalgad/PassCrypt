@@ -15,9 +15,9 @@ public class MangerSerializer {
     String pass = null;
     while (check) {
       check = false;
+      
+      // Get Master Password
       pass = MessageDisplay.inputDisplay("Input the master password.");
-      if (pass == "") {
-      }
       if (pass != null) {
         try {
           Files.createDirectory(f1.toPath());
@@ -32,6 +32,10 @@ public class MangerSerializer {
         MessageDisplay.textDisplay("Succesfully created new manager!");
         return true;
       }
+      
+      
+      // Get Parameters
+      pass = MessageDisplay.inputDisplay("Input the master password."); 
     }
     return false;
   }

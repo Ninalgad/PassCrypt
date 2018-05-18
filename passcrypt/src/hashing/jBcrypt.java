@@ -1,4 +1,4 @@
-package cryption;
+package hashing;
 
 //Copyright (c) 2006 Damien Miller <djm@mindrot.org>
 //

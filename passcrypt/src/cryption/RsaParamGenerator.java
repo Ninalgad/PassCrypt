@@ -3,17 +3,35 @@ package cryption;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 
-import config.parameters;
+import config.ParamGroup;
 
 
 public class RsaParamGenerator {
 	private BigInteger privateExponent;
 	private BigInteger publicMod;
 	
-	
-	public RsaParamGenerator(int strength) {
-		genKeyPair(strength);
+	public RsaParamGenerator(ParamGroup parameters) {
+		int bitLength = parameters.getRsasrength();
+		BigInteger p = genBigPrime(bitLength);
+		BigInteger q = genBigPrime(bitLength);
+		BigInteger e = parameters.getRsapublicexp();
+		BigInteger d = genPrivateKey(e, p, q);
+		BigInteger mp = p.add(new BigInteger("-1"));
+		BigInteger mq = q.add(new BigInteger("-1"));
+		BigInteger L = lcm(mp, mq);
+		
+		while(!checks(p, q, e, d, L)) {
+			p = genBigPrime(bitLength);
+			q = genBigPrime(bitLength);
+			d = genPrivateKey(e, p, q);
+			mp = p.add(new BigInteger("-1"));
+			mq = q.add(new BigInteger("-1"));
+			L = lcm(mp, mq);
+		}
+		privateExponent = d;
+		publicMod = p.multiply(q);
 	}
+	
 	
 	public BigInteger getPublicMod() {
 		return publicMod;
@@ -35,26 +53,6 @@ public class RsaParamGenerator {
 
 	private static BigInteger lcm(BigInteger a, BigInteger b) {
 		return a.multiply(b.divide(a.gcd(b)));
-	}
-
-	private void genKeyPair(int bitLength) {
-		BigInteger p = genBigPrime(bitLength);
-		BigInteger q = genBigPrime(bitLength);
-		BigInteger e = parameters.PUBLIC_EXP;
-		BigInteger d = genPrivateKey(e, p, q);
-		BigInteger mp = p.add(new BigInteger("-1"));
-		BigInteger mq = q.add(new BigInteger("-1"));
-		BigInteger L = lcm(mp, mq);
-		while(!checks(p, q, e, d, L)) {
-			p = genBigPrime(bitLength);
-			q = genBigPrime(bitLength);
-			d = genPrivateKey(e, p, q);
-			mp = p.add(new BigInteger("-1"));
-			mq = q.add(new BigInteger("-1"));
-			L = lcm(mp, mq);
-		}
-		privateExponent = d;
-		publicMod = p.multiply(q);
 	}
 
 	private static Boolean checks(BigInteger p, BigInteger q, BigInteger e, BigInteger d, BigInteger l) {

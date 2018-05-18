@@ -1,15 +1,15 @@
-package cryption;
+package hashing;
 
 import java.security.MessageDigest;
 
 import org.bouncycastle.jcajce.provider.digest.SHA3.DigestSHA3;
 
-import config.parameters;
+import config.ParamGroup;
 
 public class Sha3Cryption {
 
-	public static String hash(final String input) {
-		final DigestSHA3 sha3 = new DigestSHA3(parameters.Sha3BitLen);
+	public static String hash(final String input, ParamGroup options) {
+		final DigestSHA3 sha3 = new DigestSHA3(options.getSha3bitlen());
 		sha3.update(input.getBytes());
 		return Sha3Cryption.hashToString(sha3);
 	}

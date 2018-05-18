@@ -18,7 +18,7 @@ import javax.xml.bind.DatatypeConverter;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
-import config.parameters;
+import config.ParamGroup;
 
 
 public class AesCryption implements Serializable {
@@ -31,9 +31,9 @@ public class AesCryption implements Serializable {
 	
 	private String encryptedText;
 	
-	public AesCryption(char[] password, String message, String salt) {
+	public AesCryption(char[] password, String message, String salt, ParamGroup options) {
 		try {
-			encryptedText = encrypt(password, message, salt);
+			encryptedText = encrypt(password, message, salt, options);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -43,22 +43,22 @@ public class AesCryption implements Serializable {
 		return encryptedText;
 	}
 	
-	public String getDecryptedText(char[] password, String salt) {
+	public String getDecryptedText(char[] password, String salt, ParamGroup options) {
 		String plainText = "";
 		try {
-			plainText = decrypt(password, this.encryptedText, salt);
+			plainText = decrypt(password, this.encryptedText, salt, options);
 		} catch (Exception e) {
 			return "Couldn't decode " + this.getClass();
 		}
 		return plainText;
 	}
 
-	private String encrypt(char[] password, String message, String salt) throws Exception {
+	private String encrypt(char[] password, String message, String salt, ParamGroup options) throws Exception {
 		fixKeyLength();
 		byte[] saltBytes = salt.getBytes();
 
 		SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
-		PBEKeySpec spec = new PBEKeySpec(password, saltBytes, parameters.iterations, parameters.keySize);
+		PBEKeySpec spec = new PBEKeySpec(password, saltBytes, options.getAesiters(), options.getAeskeysize());
 		SecretKey secretKey = skf.generateSecret(spec);
 		SecretKeySpec secretSpec = new SecretKeySpec(secretKey.getEncoded(), "AES");
 
@@ -71,12 +71,12 @@ public class AesCryption implements Serializable {
 		return DatatypeConverter.printBase64Binary(encryptedTextBytes);
 	}
 
-	private String decrypt(char[] password, String encryptedText, String salt) throws Exception {
+	private String decrypt(char[] password, String encryptedText, String salt, ParamGroup options) throws Exception {
 		fixKeyLength();
 		byte[] saltBytes = salt.getBytes();
 		
 		SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
-		PBEKeySpec spec = new PBEKeySpec(password, saltBytes, parameters.iterations, parameters.keySize);
+		PBEKeySpec spec = new PBEKeySpec(password, saltBytes, options.getAesiters(), options.getAeskeysize());
 		SecretKey secretKey = skf.generateSecret(spec);
 
 		byte[] encryptedTextBytes = DatatypeConverter.parseBase64Binary(encryptedText);

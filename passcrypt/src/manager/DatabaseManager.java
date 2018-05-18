@@ -4,15 +4,17 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Set;
 
+import config.PrameterGroupFactory;
+import config.ParamGroup;
+import config.PrameterGroupTypes;
 import cryption.AesCryption;
-import cryption.CompoundHash;
+import hashing.CompoundHash;
 import cryption.RsaCryption;
 import cryption.RsaParamGenerator;
-import cryption.jBcrypt;
+import hashing.jBcrypt;
 import gui.MessageDisplay;
 import de.mkammerer.argon2.Argon2;
 import de.mkammerer.argon2.Argon2Factory;
-import config.parameters;
 
 public class DatabaseManager implements Serializable {
   /**
@@ -31,13 +33,17 @@ public class DatabaseManager implements Serializable {
   private AesCryption rsaPublicMod;
   private AesCryption rsaPrivateKey;
   private String masterPasswordHash;
+  
+  private static ParamGroup parameters = PrameterGroupFactory.create(PrameterGroupTypes.BALANCED);
 
-  public DatabaseManager(char[] masterPass) {
-    baseSalt = jBcrypt.gensalt(parameters.BcryptSaltLogRounds);
-    masterPasswordHash = CompoundHash.hash(masterPass, baseSalt);
-    RsaParamGenerator params = new RsaParamGenerator(parameters.RsaSrength);
-    rsaPublicMod = new AesCryption(masterPass, params.getPublicMod().toString(), baseSalt);
-    rsaPrivateKey = new AesCryption(masterPass, params.getPrivateExponent().toString(), baseSalt);
+
+
+public DatabaseManager(char[] masterPass) {
+    baseSalt = jBcrypt.gensalt(parameters.getBcryptsaltlogrounds());
+    masterPasswordHash = CompoundHash.hash(masterPass, baseSalt, parameters);
+    RsaParamGenerator params = new RsaParamGenerator(parameters);
+    rsaPublicMod = new AesCryption(masterPass, params.getPublicMod().toString(), baseSalt, parameters);
+    rsaPrivateKey = new AesCryption(masterPass, params.getPrivateExponent().toString(), baseSalt, parameters);
     wipe(masterPass);
   }
 
@@ -48,19 +54,19 @@ public class DatabaseManager implements Serializable {
       MessageDisplay.textDisplay("'" + label + "' already exists visible directory.");
       return false;
     }
-    if (!CompoundHash.verify(masterPasswordHash, password, baseSalt)) {
+    if (!CompoundHash.verify(masterPasswordHash, password, baseSalt, parameters)) {
       // This check only insures that all encryption performed in
       // encryptedPassKeys use the master key, for consistency.
       MessageDisplay.textDisplay("Incorrect master password");
       return false;
     }
 
-    String salt = jBcrypt.gensalt(parameters.BcryptSaltLogRounds);;
-    String pubExp = parameters.PUBLIC_EXP.toString();
+    String salt = jBcrypt.gensalt(parameters.getBcryptsaltlogrounds());
+    String pubExp = parameters.getRsapublicexp().toString();
     RsaCryption saltEncoder =
         new RsaCryption(salt, pubExp, getPublicMod(password), getPrivateKey(password));
     cryptedSalts.put(label, saltEncoder);
-    cryptedPasswords.put(label, new AesCryption(password, newPass, salt));
+    cryptedPasswords.put(label, new AesCryption(password, newPass, salt, parameters));
     wipe(password);
     MessageDisplay.textDisplay("Successfully added new Password");
     return true;
@@ -71,7 +77,7 @@ public class DatabaseManager implements Serializable {
       MessageDisplay.textDisplay(label + " doesn't exists in visible directory");
       return null;
     }
-    if (!CompoundHash.verify(masterPasswordHash, masterPass, baseSalt)) {
+    if (!CompoundHash.verify(masterPasswordHash, masterPass, baseSalt, parameters)) {
       // This check only insures that all encryption performed in
       // encryptedPassKeys use the master key, for consistency.
       MessageDisplay.textDisplay("Incorrect master password");
@@ -80,13 +86,13 @@ public class DatabaseManager implements Serializable {
 
     RsaCryption saltEncoder = cryptedSalts.get(label);
     String salt = saltEncoder.decrypt(getPublicMod(masterPass), getPrivateKey(masterPass));
-    String word = cryptedPasswords.get(label).getDecryptedText(masterPass, salt);
+    String word = cryptedPasswords.get(label).getDecryptedText(masterPass, salt, parameters);
     wipe(masterPass);
     return word;
   }
 
   public boolean delete(String usage, char[] masterPass) {
-    if (!CompoundHash.verify(masterPasswordHash, masterPass, baseSalt)) {
+    if (!CompoundHash.verify(masterPasswordHash, masterPass, baseSalt, parameters)) {
       MessageDisplay.textDisplay("Incorrect master password");
       return false;
     } else {
@@ -103,15 +109,15 @@ public class DatabaseManager implements Serializable {
   
   
   private String getPrivateKey(char[] masterPass) {
-    return rsaPrivateKey.getDecryptedText(masterPass, baseSalt);
+    return rsaPrivateKey.getDecryptedText(masterPass, baseSalt, parameters);
   }
 
   private String getPublicMod(char[] masterPass) {
-    return rsaPublicMod.getDecryptedText(masterPass, baseSalt);
+    return rsaPublicMod.getDecryptedText(masterPass, baseSalt, parameters);
   }
   
   private static void wipe(char[] word) {
-    Argon2 cypher = Argon2Factory.create(parameters.ArgonType, parameters.saltLen, parameters.hashLen);
+    Argon2 cypher = Argon2Factory.create(parameters.getArgontype(), parameters.getArgonsaltlen(), parameters.getArgonhashlen());
     cypher.wipeArray(word);
   }
 }
