@@ -1,46 +1,47 @@
 package manager;
 
-import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import javax.swing.JFrame;
 
 import fileHandlers.SerialFiles;
-import gui.MessageDisplay;
+import gui.InterfacePanel;
+
 
 public class MangerSerializer {
-  public static boolean createNewManager() {
-    String dir = DatabaseManager.MAIN_DIR;
-    File f1 = new File(dir);
-    Boolean check = true;
-    String pass = null;
-    while (check) {
-      check = false;
-      
-      // Get Master Password
-      pass = MessageDisplay.inputDisplay("Input the master password.");
-      if (pass != null) {
-        try {
-          Files.createDirectory(f1.toPath());
-        } catch (IOException e) {
-          MessageDisplay
-              .textDisplay("A manager already exists on this system. Please delete the current"
-                  + " manager if you wish to create a new one.");
-          check = true;
-        }
-        DatabaseManager manager = new DatabaseManager(pass.toCharArray());
-        SerialFiles.serializeObject(manager, DatabaseManager.MAIN_PATH);
-        MessageDisplay.textDisplay("Succesfully created new manager!");
-        return true;
-      }
-      
-      
-      // Get Parameters
-      pass = MessageDisplay.inputDisplay("Input the master password."); 
-    }
-    return false;
-  }
+	public static boolean offerNewManager(char[] password, DatabaseManager manager, JFrame setupFrame) {
+		Path path = Paths.get(manager.getDatabaseDirectory());
+		if (Files.notExists(path, LinkOption.NOFOLLOW_LINKS)) {
+			return false;
+		}
+		
+		SerialFiles.serializeObject(manager, manager.getDatabasePath());
+		InterfacePanel.createAndShow(manager, setupFrame);
+		return true;
+	}
+	
+	public static boolean isManager(String path) {
+		boolean check = true;
+		try {
+			DatabaseManager proposed = (DatabaseManager) SerialFiles.deSerializeObject(path);
+		} catch (Exception e) {
+			check = false;
+			e.printStackTrace();
+		}
+		return check;
+	}
 
-  public static DatabaseManager getManager() throws Exception {
-    return (DatabaseManager) SerialFiles.deSerializeObject(DatabaseManager.MAIN_PATH);
-  }
+	public static DatabaseManager getManager(String managerPath) {
+		DatabaseManager proposed = null;
+		try {
+			proposed = (DatabaseManager) SerialFiles.deSerializeObject(managerPath);
+		} catch (Exception e) {
+			
+			e.printStackTrace();
+		}
+		return proposed;
+	}
 }

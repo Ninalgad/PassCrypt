@@ -1,12 +1,17 @@
 package config.groups;
 
+import java.io.Serializable;
 import java.math.BigInteger;
 
 import de.mkammerer.argon2.Argon2Factory;
 import de.mkammerer.argon2.Argon2Factory.Argon2Types;
 import config.ParamGroup;
 
-public class HeavyParameters implements ParamGroup{
+public class HeavyParameters implements ParamGroup, Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 8843889978893844449L;
 	/* RSA Parameters */
 	static final int RsaSrength = 4096;
 	static final BigInteger RsaPublicExp = new BigInteger("138179");

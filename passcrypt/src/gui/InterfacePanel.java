@@ -27,9 +27,6 @@ import javax.swing.JSeparator;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
@@ -45,7 +42,7 @@ import java.awt.Image;
  * The user interface for the manager system. Implemented using Swing.
  * 
  */
-public class PassCrypt extends JPanel implements ListSelectionListener {
+public class InterfacePanel extends JPanel implements ListSelectionListener {
 	private static final long serialVersionUID = -825543287948305318L;
 
 	private DefaultListModel<String> listModel;
@@ -55,7 +52,7 @@ public class PassCrypt extends JPanel implements ListSelectionListener {
 	private JLabel newUsageLabel = new JLabel("New Password Usage:");
 	private JLabel newPassLabel = new JLabel("New Password Entry:");
 
-	private final JPasswordField masterPasswordField = new JPasswordField(30);;
+	private final JPasswordField masterPasswordField = new JPasswordField(30);
 
 	JTextField newUsage = new JTextField(30);
 	private JTextField newPass;
@@ -64,14 +61,26 @@ public class PassCrypt extends JPanel implements ListSelectionListener {
 	private JButton buttonAutoGen;
 	private JButton encodeButton;
 	private JButton decodeButton;
+	
+	private String dbManagerPath;
 
 	/**
 	 * Constructs the  system. Requires the existence of an manager on local desktop.
 	 * 
 	 */
-	public PassCrypt() {
+	public InterfacePanel(String managerPath) {
 		super(new BorderLayout());
-
+		this.dbManagerPath = managerPath;
+		run();
+	}
+	
+	public InterfacePanel(DatabaseManager man) {
+		super(new BorderLayout());
+		dbManagerPath = man.getDatabasePath();
+		run();
+	}
+	
+	private void run() {
 		listModel = new DefaultListModel<String>();
 		// Create the list and put it in a scroll pane.
 		list = new JList<String>(listModel);
@@ -88,7 +97,6 @@ public class PassCrypt extends JPanel implements ListSelectionListener {
 		encodeButton.setActionCommand("Encode");
 		encodeButton.addActionListener(encodeListener);
 		encodeButton.setEnabled(false);
-
 
 		deleteButton = new JButton("Delete");
 		deleteButton.setActionCommand("Delete");
@@ -107,7 +115,6 @@ public class PassCrypt extends JPanel implements ListSelectionListener {
 
 		// Create a panel that uses BoxLayout.
 		JPanel buttonPane = new JPanel();
-		buttonPane.setLayout(new GridBagLayout());
 		buttonPane.setLayout(new GridBagLayout());
 		GridBagConstraints constraints = new GridBagConstraints();
 		constraints.fill = GridBagConstraints.HORIZONTAL;
@@ -185,7 +192,7 @@ public class PassCrypt extends JPanel implements ListSelectionListener {
 			DatabaseManager manager = null;
 			boolean manCheck = true;
 			try {
-				manager = MangerSerializer.getManager();
+				manager = MangerSerializer.getManager(dbManagerPath);
 			} catch (Exception ex) {
 				ex.printStackTrace();
 				manCheck = false;
@@ -252,7 +259,7 @@ public class PassCrypt extends JPanel implements ListSelectionListener {
 			DatabaseManager manager = null;
 			boolean manCheck = true;
 			try {
-				manager = MangerSerializer.getManager();
+				manager = MangerSerializer.getManager(dbManagerPath);
 			} catch (Exception ex) {
 				ex.printStackTrace();
 				manCheck = false;
@@ -343,7 +350,7 @@ public class PassCrypt extends JPanel implements ListSelectionListener {
 			DatabaseManager manager = null;
 			boolean manCheck = true;
 			try {
-				manager = MangerSerializer.getManager();
+				manager = MangerSerializer.getManager(dbManagerPath);
 			} catch (Exception ex) {
 				ex.printStackTrace();
 				manCheck = false;
@@ -401,9 +408,10 @@ public class PassCrypt extends JPanel implements ListSelectionListener {
 		}
 	}
 
-	private static void update(DatabaseManager updatedManager) {
-		DirectoryControl.deleteFilesInDir(DatabaseManager.MAIN_DIR);
-		SerialFiles.serializeObject(updatedManager, DatabaseManager.MAIN_PATH);
+	private void update(DatabaseManager updatedManager) {
+		DatabaseManager currentManager = MangerSerializer.getManager(dbManagerPath);
+		DirectoryControl.deleteFilesInDir(currentManager.getDatabaseDirectory());
+		SerialFiles.serializeObject(updatedManager, dbManagerPath);
 	}
 
 	/**
@@ -429,7 +437,7 @@ public class PassCrypt extends JPanel implements ListSelectionListener {
 		DatabaseManager manager = null;
 		boolean manCheck = true;
 		try {
-			manager = MangerSerializer.getManager();
+			manager = MangerSerializer.getManager(dbManagerPath);
 		} catch (Exception ex) {
 			ex.printStackTrace();
 			manCheck = false;
@@ -457,58 +465,26 @@ public class PassCrypt extends JPanel implements ListSelectionListener {
 		list.setSelectedIndex(index);
 		list.ensureIndexIsVisible(index);
 	}
-
-	/**
-	 * Create the GUI and show it. For thread safety, this method should be invoked from the
-	 * event-dispatching thread.
-	 */
-	private static void createAndShowGui() {
+	
+	public static void createAndShow(DatabaseManager man, JFrame setupFrame) {
+		// close previous frame
+		setupFrame.dispose();
+		
 		// Create and set up the window.
 		JFrame frame = new JFrame("Cauchy");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.setLocationRelativeTo(null);
 
 		Image im = Toolkit.getDefaultToolkit().getImage("icon_256.png");
 		frame.setIconImage(im);
 
 		// Create and set up the content pane.
-		JComponent newContentPane = new PassCrypt();
+		JComponent newContentPane = new InterfacePanel(man.getDatabasePath());
 		newContentPane.setOpaque(true); // content panes must be opaque
 		frame.setContentPane(newContentPane);
 
 		// Display the window.
 		frame.pack();
 		frame.setVisible(true);
-	}
-
-	/**
-	 * Schedule a job for the event dispatch thread: creating and showing this application's GUI.
-	 * 
-	 * @param args for command-line arguments.
-	 */
-	public static void main(String[] args) {
-		boolean created = true;
-		if (!DirectoryControl.fileExists(DatabaseManager.MAIN_PATH)) {
-			created = MangerSerializer.createNewManager();
-		}
-		if (created) {
-			SwingUtilities.invokeLater(new Runnable() {
-				public void run() {
-					// Turn off metal's use of bold fonts
-					try {
-						// Set System L&F
-						UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-					} catch (UnsupportedLookAndFeelException e) {
-						e.printStackTrace();
-					} catch (ClassNotFoundException e) {
-						e.printStackTrace();
-					} catch (InstantiationException e) {
-						e.printStackTrace();
-					} catch (IllegalAccessException e) {
-						e.printStackTrace();
-					}
-					createAndShowGui();
-				}
-			});
-		}
 	}
 }
