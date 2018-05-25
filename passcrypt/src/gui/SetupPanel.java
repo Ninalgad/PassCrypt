@@ -29,13 +29,21 @@ import config.PrameterGroupTypes;
 import manager.DatabaseManager;
 import manager.MangerSerializer;
 
-public class SetupPanel extends JPanel 
-implements ActionListener{
 
-	/**
-	 * 
-	 */
+/**
+ * Provides the GUI for creating a new password manager/database.
+ * All input actions are interpreted here for a valid database. Outside of
+ *  graphical elements, only the path to a valid database is stored.
+ *  
+ * @author user		Dean Ninalga
+ * @version 		%I%, %G% 
+ * @since			1.0
+ */
+public class SetupPanel extends JPanel implements ActionListener{
+
 	private static final long serialVersionUID = 1L;
+	
+	public static final String TITLE = "Set Up";
 
 	private JFrame setupFrame;
 	private JButton confirmButton = new JButton("Ok");
@@ -62,14 +70,26 @@ implements ActionListener{
 
 	static boolean complete = false; // checks for when the set-up process is done
 
-	public SetupPanel(JFrame frame) {
+	/**
+	 * Places graphical elements on this panel and makes available 
+	 * previously saved passwords from the database located
+	 * at the given path.
+	 * <p>
+	 * This assumes that a valid database file exists at the given
+	 * path.
+	 * 
+	 * @param managerPath	path to a valid database
+	 * @return				<code>null</code>
+	 * @since				1.0
+	 */
+	public SetupPanel() {
 		super(new BorderLayout());
 
-		this.setupFrame = frame;
 		// Set-up confirmation button
-		ConfirmListener listener = new ConfirmListener(confirmButton);
+		ConfirmListener listener = new ConfirmListener();
 		confirmButton.setActionCommand("Confirm");
 		confirmButton.addActionListener(listener);
+		confirmButton.setEnabled(true);
 
 		// Set-up JRadio buttons for PameterGroupTypes
 		JRadioButton balencedTypeButton = new JRadioButton(balencedTypeStr);
@@ -181,7 +201,16 @@ implements ActionListener{
 		setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
 	}
-
+	
+	
+	/**
+	 * Chooses the encyption/hashing parameters for
+	 * a new database manager based on what the user selects on
+	 * this window.
+	 * 
+	 * @author Dean N.
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		switch(e.getActionCommand()) {
@@ -197,18 +226,24 @@ implements ActionListener{
 	}
 
 	/**
-	 * Governs the actions of the OK button.
+	 * Provides the functionality of the confirmation button. Using the registered
+	 * text in the respective text fields this ensures the data entries are valid
+	 * once the confirmation button is clicked.
 	 * 
-	 * @author Dean
-	 *
+	 * @author	Dean N.
+	 * @since 	1.0
 	 */
 	class ConfirmListener implements ActionListener {
 
-		public ConfirmListener(JButton button) {
-			button.setEnabled(true);
-		}
-
-		// Required by ActionListener.
+		/**
+		 * Ensures that the master-password is sufficiently secure and 
+		 * that a new data can be saved at the user selected location
+		 * with the provided name.
+		 * 
+		 * {@inheritDoc}
+		 * @author 	Dean N.
+		 * @since	1.0
+		 */
 		public void actionPerformed(ActionEvent e) {
 			char[] pass = masterPass.getPassword();
 			DatabaseManager newManager;
@@ -234,23 +269,4 @@ implements ActionListener{
 			Arrays.fill(pass, '0');
 		}
 	}
-	
-	public static void createAndShow(JFrame startPanel) {
-		// close the previous frame
-		startPanel.dispose();
-		
-		// Create and set up the window.
-		JFrame frame = new JFrame("Setup");
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.setLocationRelativeTo(null);
-
-		// Create and set up the content pane.
-		JComponent newContentPane = new SetupPanel(frame);
-		newContentPane.setOpaque(true); // content panes must be opaque
-		frame.setContentPane(newContentPane);
-
-		// Display the window.
-		frame.pack();
-		frame.setVisible(true);
-	} 
 }

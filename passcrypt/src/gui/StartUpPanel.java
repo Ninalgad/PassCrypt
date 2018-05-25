@@ -23,7 +23,13 @@ implements ActionListener{
 	private JFrame setupFrame;
 
 	/**
-	 * 
+	 * Provides the GUI for initial start-up of the application.
+	 * Let the users either load a previously created database (manager)
+	 * or create a new database.
+	 *  
+	 * @author user		Dean Ninalga
+	 * @version 		%I%, %G% 
+	 * @since			1.0
 	 */
 	private static final long serialVersionUID = 1L;
 	
@@ -34,6 +40,13 @@ implements ActionListener{
 
 	JFileChooser fc;
 
+	/**
+	 * Places graphical elements on this panel.
+	 * 
+	 * @param frame			the embedding frame of this panel
+	 * @return				<code>null</code>
+	 * @since				1.0
+	 */
 	public StartUpPanel(JFrame frame) {
 		super(new BorderLayout());
 		this.setupFrame = frame;
@@ -78,6 +91,15 @@ implements ActionListener{
 
 	}
 
+	/**
+	 * Load a valid database (manger) and show the main interface window or
+	 * show the set-up window on the the load / new button has been 
+	 * selected respectively.
+	 * 
+	 * {@inheritDoc}
+	 * @author 	Dean N.
+	 * @since	1.0
+	 */
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if (e.getSource() == loadButton) {
@@ -95,7 +117,7 @@ implements ActionListener{
 				}
 			}
 		} else if (e.getSource() == newButton) {
-			SetupPanel.createAndShow(this.setupFrame);
+			Main.transitionFrames(this.setupFrame, new SetupPanel(), SetupPanel.TITLE);
 		}
 	}
 
